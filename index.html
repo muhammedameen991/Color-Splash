@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Splash</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="images/icon.png" type="image/png">
+</head>
+<body>
+
+<h1>Color Splash</h1>
+
+<!-- Color Palette -->
+<div class="palette">
+  <div id="color-red" class="color-btn" style="background:red;"></div>
+  <div id="color-yellow" class="color-btn" style="background:yellow;"></div>
+  <div id="color-green" class="color-btn" style="background:green;"></div>
+  <div id="color-orange" class="color-btn" style="background:orange;"></div>
+  <div id="color-purple" class="color-btn" style="background:purple;"></div>
+
+  <!-- Eraser with PNG -->
+  <div id="eraser" class="color-btn">
+    <img src="images/eraser.png" alt="Eraser" width="35" height="35">
+  </div>
+</div>
+
+<!-- Brush Size -->
+<div class="brush-size">
+  <label>Brush Size: </label>
+  <select id="brush-size">
+    <option value="5">Small</option>
+    <option value="10" selected>Medium</option>
+    <option value="20">Large</option>
+  </select>
+</div>
+
+<!-- Fruit Buttons -->
+<div class="fruit-buttons">
+  <button id="fruit-apple">Apple</button>
+  <button id="fruit-banana">Banana</button>
+  <button id="fruit-orange">Orange</button>
+  <button id="fruit-mango">Mango</button>
+  <button id="fruit-watermelon">Watermelon</button>
+</div>
+
+<!-- Action Buttons -->
+<div class="actions">
+  <button id="undo-btn">Undo</button>
+  <button id="redo-btn">Redo</button>
+  <button id="clear-btn">Clear</button>
+  <button id="save-btn">Save</button>
+</div>
+
+<!-- Canvas -->
+<canvas id="canvas" width="500" height="500"></canvas>
+
+<!-- Scripts -->
+<script src="script.js"></script>
+</body>
+</html>
