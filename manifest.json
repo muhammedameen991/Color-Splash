@@ -1,0 +1,15 @@
+{
+  "name": "Color Splash",
+  "short_name": "ColorSplash",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#a2d5f2",
+  "theme_color": "#ff6f61",
+  "icons": [
+    {
+      "src": "images/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
