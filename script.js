@@ -1,4 +1,3 @@
-// ======= Canvas Setup =======
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let color = 'red';
@@ -10,14 +9,13 @@ let fruitImg = new Image();
 let undoStack = [];
 let redoStack = [];
 
-// ======= Load Sounds =======
-const brushSound = new Audio('sounds/brush.mp3');         // drawing
-const eraserSound = new Audio('sounds/eraser.mp3');       // erasing
-const clickSound = new Audio('sounds/click.mp3');         // button clicks
-const fruitLoadSound = new Audio('sounds/fruit-load.mp3'); // fruit load
-const bgMusic = new Audio('sounds/background.mp3');       // background music
+// Sounds
+const brushSound = new Audio('sounds/brush.mp3');
+const eraserSound = new Audio('sounds/eraser.mp3');
+const clickSound = new Audio('sounds/click.mp3');
+const fruitLoadSound = new Audio('sounds/fruit-load.mp3');
+const bgMusic = new Audio('sounds/background.mp3');
 
-// Optional: adjust volumes
 brushSound.volume = 0.3;
 eraserSound.volume = 0.3;
 clickSound.volume = 0.5;
@@ -25,120 +23,135 @@ fruitLoadSound.volume = 0.4;
 bgMusic.volume = 0.2;
 bgMusic.loop = true;
 
-// ======= Start background music after first user interaction =======
+// Start music after first interaction
 let musicStarted = false;
 document.body.addEventListener('click', () => {
   if(!musicStarted) {
-    bgMusic.play().catch(() => {
-      console.log("Background music requires user interaction to play.");
-    });
+    bgMusic.play().catch(()=>console.log("User interaction required."));
     musicStarted = true;
   }
 }, { once: true });
 
-// ======= Color Buttons =======
-document.getElementById('color-red').addEventListener('click', () => { color='red'; playClick(); });
-document.getElementById('color-yellow').addEventListener('click', () => { color='yellow'; playClick(); });
-document.getElementById('color-green').addEventListener('click', () => { color='green'; playClick(); });
-document.getElementById('color-orange').addEventListener('click', () => { color='orange'; playClick(); });
-document.getElementById('color-purple').addEventListener('click', () => { color='purple'; playClick(); });
+// Resize canvas dynamically
+function resizeCanvas() {
+  const size = Math.min(window.innerWidth * 0.9, 500);
+  canvas.width = size;
+  canvas.height = size;
 
-// Eraser Button
-document.getElementById('eraser').addEventListener('click', () => { color='white'; playClick(); });
+  // redraw last state
+  if(undoStack.length > 0){
+    let img = new Image();
+    img.src = undoStack[undoStack.length - 1];
+    img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  } else if(fruitImg.src) {
+    ctx.drawImage(fruitImg, 0, 0, canvas.width, canvas.height);
+  }
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-// ======= Brush Size =======
-document.getElementById('brush-size').addEventListener('change', (e) => { 
-  brushSize = parseInt(e.target.value); 
-  playClick(); 
+// Color buttons
+['red','yellow','green','orange','purple'].forEach(c=>{
+  document.getElementById(`color-${c}`).addEventListener('click', ()=>{
+    color=c; playClick();
+  });
 });
 
-// ======= Fruit Buttons =======
-const fruits = ['apple', 'banana', 'orange', 'mango', 'watermelon'];
-fruits.forEach(fruit => {
-  document.getElementById(`fruit-${fruit}`).addEventListener('click', () => loadFruit(`${fruit}.png`));
+// Eraser
+document.getElementById('eraser').addEventListener('click', ()=>{ color='white'; playClick(); });
+
+// Brush size
+document.getElementById('brush-size').addEventListener('change', e=>{
+  brushSize = parseInt(e.target.value); playClick();
 });
 
-// ======= Action Buttons =======
-document.getElementById('clear-btn').addEventListener('click', () => { clearCanvas(); playClick(); });
-document.getElementById('undo-btn').addEventListener('click', () => { undo(); playClick(); });
-document.getElementById('redo-btn').addEventListener('click', () => { redo(); playClick(); });
-document.getElementById('save-btn').addEventListener('click', () => { saveCanvas(); playClick(); });
+// Fruits
+['apple','banana','orange','mango','watermelon'].forEach(f=>{
+  document.getElementById(`fruit-${f}`).addEventListener('click', ()=>loadFruit(`${f}.png`));
+});
 
-// ======= Drawing Events =======
+// Actions
+document.getElementById('clear-btn').addEventListener('click', ()=>{ clearCanvas(); playClick(); });
+document.getElementById('undo-btn').addEventListener('click', ()=>{ undo(); playClick(); });
+document.getElementById('redo-btn').addEventListener('click', ()=>{ redo(); playClick(); });
+document.getElementById('save-btn').addEventListener('click', ()=>{ saveCanvas(); playClick(); });
+
+// Drawing
 canvas.addEventListener('mousedown', () => { painting = true; saveState(); });
 canvas.addEventListener('mouseup', () => painting = false);
 canvas.addEventListener('mousemove', draw);
 
+// Touch support
+canvas.addEventListener('touchstart', e => { painting = true; saveState(); e.preventDefault(); });
+canvas.addEventListener('touchend', () => painting = false);
+canvas.addEventListener('touchmove', e => {
+  if(!painting) return;
+  const touch = e.touches[0];
+  draw({ offsetX: touch.clientX - canvas.getBoundingClientRect().left, offsetY: touch.clientY - canvas.getBoundingClientRect().top });
+  e.preventDefault();
+});
+
 function draw(e) {
   if(!painting) return;
   ctx.fillStyle = color;
+
   ctx.beginPath();
-  ctx.arc(e.offsetX, e.offsetY, brushSize, 0, Math.PI * 2);
+  ctx.arc(e.offsetX, e.offsetY, brushSize, 0, Math.PI*2);
   ctx.fill();
 
-  // Play brush or eraser sound
-  if(color === 'white') {
-    eraserSound.currentTime = 0;
-    eraserSound.play();
-  } else {
-    brushSound.currentTime = 0;
-    brushSound.play();
-  }
+  if(color==='white'){ eraserSound.currentTime=0; eraserSound.play(); }
+  else { brushSound.currentTime=0; brushSound.play(); }
 }
 
-// ======= Clear Canvas =======
 function clearCanvas() {
   saveState();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if(fruitImg.src) ctx.drawImage(fruitImg, 0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(fruitImg.src) ctx.drawImage(fruitImg,0,0,canvas.width,canvas.height);
 }
 
-// ======= Load Fruit Image =======
 function loadFruit(filename) {
   fruitImg.src = `images/${filename}`;
   fruitImg.onload = () => {
     saveState();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(fruitImg, 0, 0, canvas.width, canvas.height);
-    fruitLoadSound.currentTime = 0;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(fruitImg,0,0,canvas.width,canvas.height);
+    fruitLoadSound.currentTime=0;
     fruitLoadSound.play();
   };
 }
 
-// ======= Undo / Redo =======
+// Undo/Redo
 function saveState() {
   undoStack.push(canvas.toDataURL());
-  redoStack = [];
+  redoStack=[];
 }
 
 function undo() {
-  if(undoStack.length === 0) return;
+  if(undoStack.length===0) return;
   redoStack.push(canvas.toDataURL());
-  let previous = undoStack.pop();
   let img = new Image();
-  img.src = previous;
-  img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  img.src = undoStack.pop();
+  img.onload = ()=>ctx.drawImage(img,0,0,canvas.width,canvas.height);
 }
 
 function redo() {
-  if(redoStack.length === 0) return;
+  if(redoStack.length===0) return;
   undoStack.push(canvas.toDataURL());
-  let next = redoStack.pop();
   let img = new Image();
-  img.src = next;
-  img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  img.src = redoStack.pop();
+  img.onload = ()=>ctx.drawImage(img,0,0,canvas.width,canvas.height);
 }
 
-// ======= Save Canvas as PNG =======
+// Save
 function saveCanvas() {
-  const link = document.createElement('a');
-  link.download = 'my_fruit_coloring.png';
-  link.href = canvas.toDataURL();
+  const link=document.createElement('a');
+  link.download='my_fruit_coloring.png';
+  link.href=canvas.toDataURL();
   link.click();
 }
 
-// ======= Play Click Sound =======
+// Click sound
 function playClick() {
-  clickSound.currentTime = 0;
+  clickSound.currentTime=0;
   clickSound.play();
 }
