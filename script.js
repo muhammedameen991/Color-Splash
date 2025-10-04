@@ -1,3 +1,4 @@
+// ===== Canvas Setup =====
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let color = 'red';
@@ -32,7 +33,7 @@ document.body.addEventListener('click', () => {
   }
 }, { once: true });
 
-// Resize canvas dynamically
+// ===== Resize Canvas =====
 function resizeCanvas() {
   const size = Math.min(window.innerWidth * 0.9, 500);
   canvas.width = size;
@@ -50,7 +51,7 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// Color buttons
+// ===== Colors =====
 ['red','yellow','green','orange','purple'].forEach(c=>{
   document.getElementById(`color-${c}`).addEventListener('click', ()=>{
     color=c; playClick();
@@ -62,7 +63,8 @@ document.getElementById('eraser').addEventListener('click', ()=>{ color='white';
 
 // Brush size
 document.getElementById('brush-size').addEventListener('change', e=>{
-  brushSize = parseInt(e.target.value); playClick();
+  brushSize = parseInt(e.target.value);
+  playClick();
 });
 
 // Fruits
@@ -76,7 +78,7 @@ document.getElementById('undo-btn').addEventListener('click', ()=>{ undo(); play
 document.getElementById('redo-btn').addEventListener('click', ()=>{ redo(); playClick(); });
 document.getElementById('save-btn').addEventListener('click', ()=>{ saveCanvas(); playClick(); });
 
-// Drawing
+// ===== Drawing =====
 canvas.addEventListener('mousedown', () => { painting = true; saveState(); });
 canvas.addEventListener('mouseup', () => painting = false);
 canvas.addEventListener('mousemove', draw);
@@ -91,10 +93,10 @@ canvas.addEventListener('touchmove', e => {
   e.preventDefault();
 });
 
+// ===== Draw function =====
 function draw(e) {
   if(!painting) return;
   ctx.fillStyle = color;
-
   ctx.beginPath();
   ctx.arc(e.offsetX, e.offsetY, brushSize, 0, Math.PI*2);
   ctx.fill();
@@ -103,12 +105,14 @@ function draw(e) {
   else { brushSound.currentTime=0; brushSound.play(); }
 }
 
+// ===== Clear Canvas =====
 function clearCanvas() {
   saveState();
   ctx.clearRect(0,0,canvas.width,canvas.height);
   if(fruitImg.src) ctx.drawImage(fruitImg,0,0,canvas.width,canvas.height);
 }
 
+// ===== Load Fruit =====
 function loadFruit(filename) {
   fruitImg.src = `images/${filename}`;
   fruitImg.onload = () => {
@@ -120,7 +124,7 @@ function loadFruit(filename) {
   };
 }
 
-// Undo/Redo
+// ===== Undo/Redo =====
 function saveState() {
   undoStack.push(canvas.toDataURL());
   redoStack=[];
@@ -142,7 +146,7 @@ function redo() {
   img.onload = ()=>ctx.drawImage(img,0,0,canvas.width,canvas.height);
 }
 
-// Save
+// ===== Save Canvas =====
 function saveCanvas() {
   const link=document.createElement('a');
   link.download='my_fruit_coloring.png';
@@ -150,8 +154,17 @@ function saveCanvas() {
   link.click();
 }
 
-// Click sound
+// ===== Click Sound =====
 function playClick() {
   clickSound.currentTime=0;
   clickSound.play();
+}
+
+// ===== PWA Service Worker Registration =====
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.log('Service Worker failed', err));
+  });
 }
